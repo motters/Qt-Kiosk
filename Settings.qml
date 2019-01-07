@@ -1,0 +1,19 @@
+import QtQuick 2.0
+import QtQuick.Controls 2.3
+
+Item {
+    id: settingsContainer
+
+    Text{
+        text: "Hellow there!"
+    }
+
+    Rectangle {
+        width: 100
+       height: 100
+       color: "red"
+       border.color: "black"
+       border.width: 5
+       radius: 10
+    }
+}
