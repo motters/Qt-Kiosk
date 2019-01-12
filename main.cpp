@@ -12,11 +12,12 @@
 #endif
 
 #ifdef WIN32
-    class GlobalPrintScreenBlocker
+    class KeyBlocker
     {
         public:
 
-            GlobalPrintScreenBlocker():mHKeyboardHook()
+            KeyBlocker()
+                :   m_hKeyboardHook()
             {
 
             }
@@ -26,7 +27,7 @@
               * Destructor
               *     - Prevent leaking the keyboard hook procedure handle
               */
-            ~GlobalPrintScreenBlocker()
+            ~KeyBlocker()
             {
                 unblock();
             }
@@ -42,7 +43,7 @@
              * @param lParam
              * @return
              */
-            static LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+            static LRESULT CALLBACK lowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
             {
                 // No need to move on unless the below is met
                 if (nCode < 0 || nCode != HC_ACTION || wParam != WM_KEYDOWN)
@@ -52,10 +53,10 @@
                 PKBDLLHOOKSTRUCT p = reinterpret_cast<PKBDLLHOOKSTRUCT>(lParam);
 
                 // Check for combo left key event
-                for(auto w = allowed.begin(); w != allowed.end(); w++)
+                for(auto w = m_allowedCombos.begin(); w != m_allowedCombos.end(); w++)
                 {
                     // Check for combo right key
-                    if((w->second == p->vkCode) && (w->first == leftKey) && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN ))
+                    if((w->second == p->vkCode) && (w->first == m_leftKey) && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN ))
                     {
                         // Allow combo
                         return 0;
@@ -63,7 +64,7 @@
                     else if(w->first == p->vkCode && wParam == WM_KEYDOWN) // Check combo left key
                     {
                         // Set left key
-                        leftKey = p->vkCode;
+                        m_leftKey = p->vkCode;
 
                         // Allow combo
                         return 0;
@@ -71,17 +72,17 @@
                 }
 
                 // Reset left key if it has been lifted
-                if(GetAsyncKeyState(static_cast<int>(leftKey)))
+                if(GetAsyncKeyState(static_cast<int>(m_leftKey)))
                 {
                     return 1;
                 }
                 else
                 {
-                    leftKey = 0;
+                    m_leftKey = 0;
                 }
 
                 // Check vector of disabled codes
-                for(auto i : codes)
+                for(auto i : m_bannedCodes)
                 {
                     // Does the current event matched banned codes?
                     if(p->vkCode == i)
@@ -102,7 +103,7 @@
             void block()
             {
                 // Set hook procedure handler with low level keyboard hooks and define call back
-                mHKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
+                m_hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, &lowLevelKeyboardProc, GetModuleHandle(nullptr), 0);
             }
 
             /**
@@ -113,29 +114,29 @@
             void unblock()
             {
                 // If there are keyboard hooks procedure handler unhook them
-                if(mHKeyboardHook)
-                    UnhookWindowsHookEx(mHKeyboardHook);
+                if(m_hKeyboardHook)
+                    UnhookWindowsHookEx(m_hKeyboardHook);
 
                 // Null the hook
-                mHKeyboardHook = NULL;
+                m_hKeyboardHook = nullptr;
             }
 
         private:
             // Instance of current keyboard hook
-            HHOOK mHKeyboardHook;
+            HHOOK m_hKeyboardHook;
 
             // Banned key events
-            static std::vector<unsigned long> codes;
+            static std::vector<unsigned long> m_bannedCodes;
 
             // Allowed combos
-            static std::vector<std::pair<unsigned long, unsigned long>> allowed;
+            static std::vector<std::pair<unsigned long, unsigned long>> m_allowedCombos;
 
             // Combo press current
-            static unsigned long leftKey;
+            static unsigned long m_leftKey;
     };
 
     // Blocked keys
-    std::vector<unsigned long> GlobalPrintScreenBlocker::codes = {
+    std::vector<unsigned long> KeyBlocker::m_bannedCodes = {
         VK_CONTROL, VK_LCONTROL, VK_RCONTROL,
         VK_LWIN, VK_RWIN,
         VK_SNAPSHOT,
@@ -146,13 +147,13 @@
     };
 
     // Allowed combos
-    std::vector<std::pair<unsigned long, unsigned long>> GlobalPrintScreenBlocker::allowed = {
+    std::vector<std::pair<unsigned long, unsigned long>> KeyBlocker::m_allowedCombos = {
         {VK_LCONTROL, 0x43}, // Control + C
         {VK_LCONTROL, 0x56} // Control + V
     };
 
     // No key combos
-    unsigned long GlobalPrintScreenBlocker::leftKey = 0;
+    unsigned long KeyBlocker::m_leftKey = 0;
 #endif
 
 int main(int argc, char *argv[])
@@ -161,7 +162,7 @@ int main(int argc, char *argv[])
 
     // Merge user + program variables
     int newArgc = argc + 1 + 1;
-    char** newArgv = new char*[newArgc];
+    char** newArgv = new char*[static_cast<unsigned long long>(newArgc)];
     for(int i = 0; i < argc; i++)
     {
         newArgv[i] = argv[i];
@@ -179,11 +180,8 @@ int main(int argc, char *argv[])
 
     // If windows disable methods of escaping the program
     #ifdef WIN32
-
-        GlobalPrintScreenBlocker blocker;
-
+        KeyBlocker blocker;
         blocker.block();
-
     #endif
 
     // Init web engine for os
