@@ -3,27 +3,33 @@ import QtQuick.Window 2.0
 import QtWebEngine 1.4
 import QtQuick.Controls 2.3
 
-Item {
-    id: webEngineContainer
+//Item {
+//    id: webEngineContainer
+
+//    width: parent.width
+//    height: parent.height
 
     WebEngineView {
         id: webEngine
 
-        anchors.fill: parent
+        //anchors.fill: parent
+         width: parent.width
+         height: parent.height
 
-        url: "http://intranet.chemistry.manchester.ac.uk/electronic_booking/walkup"
+        //url: "http://intranet.chemistry.manchester.ac.uk/electronic_booking/walkup"
+        url: "http://google.com"
 
         settings.pluginsEnabled: true
         settings.fullScreenSupportEnabled: true
         settings.autoLoadImages: true
         settings.javascriptEnabled: true
-        settings.errorPageEnabled: false
+        settings.errorPageEnabled: true
 
-        onContextMenuRequested: function(request)
-        {
-            request.accepted = true;
+//        onContextMenuRequested: function(request)
+//        {
+//            request.accepted = true;
 
-        }
+//        }
 
         onCertificateError: function(request)
         {
@@ -69,7 +75,7 @@ Item {
 
             print("Render process exited with code " + exitCode + " " + status);
 
-            reloadTimer.running = true;
+            //reloadTimer.running = true;
         }
 
         Timer {
@@ -80,4 +86,4 @@ Item {
             onTriggered: webEngine.reload()
         }
     }
-}
+//}

@@ -58,16 +58,16 @@ Window {
     id: window
 
     width: 1024
-    height: 750
+    height: 700
 
-    flags: Qt.FramelessWindowHint | Qt.Window
+    // flags: Qt.FramelessWindowHint | Qt.Window
 
     visible: true
 
     property bool settingsPanel: false
 
     Action {
-        shortcut: "Ctrl+D"
+        shortcut: "Ctrl+O"
         onTriggered: {
             if(!settingsPanel)
                 stackView.replace("qrc:/Settings.qml");
@@ -77,7 +77,7 @@ Window {
     }
 
     Action {
-        shortcut: "Ctrl+C"
+        shortcut: "Ctrl+I"
         onTriggered:
         {
             if(settingsPanel)
@@ -105,6 +105,12 @@ Window {
         }
     }
     Action {
+        shortcut: "Alt+F4"
+        onTriggered: {
+            console.log("Alt+F4");
+        }
+    }
+    Action {
         shortcut: StandardKey.Back
         onTriggered: {}
     }
@@ -115,8 +121,11 @@ Window {
 
     StackView {
         id: stackView
-        anchors.fill: parent
-        initialItem: Browser{}
+        width: parent.width
+        height: parent.height
+        initialItem: Browser{
+
+        }
     }
 
 }
